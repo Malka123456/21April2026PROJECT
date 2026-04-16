@@ -187,7 +187,7 @@ func (s UserService) CreateProfile(id uint, input dto_.ProfileInput) error {
 		City:         input.AddressInput.City,
 		Country:      input.AddressInput.Country,
 		PostCode:     input.AddressInput.PostCode,
-		UserId:       id,
+		UserID:       id,
 	}
 
 	err = s.Repo.CreateProfile(address)
@@ -198,14 +198,37 @@ func (s UserService) CreateProfile(id uint, input dto_.ProfileInput) error {
 	return nil
 }
 
-func (s UserService) GetProfile(id uint) (*models.User, error) {
+func (s UserService) GetProfile(id uint) (*dto_.ProfileResponse, error) {
 
 	user, err := s.Repo.FindUserById(id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &user, nil
+	response := dto_.ProfileResponse{
+	ID:        user.ID,
+	FirstName: user.FirstName,
+	LastName:  user.LastName,
+	Email:     user.Email,
+	Phone:     user.Phone,
+	UserType:  string(user.UserType),
+}
+
+response.Address = struct {
+	AddressLine1 string `json:"address_line1"`
+	AddressLine2 string `json:"address_line2"`
+	City         string `json:"city"`
+	PostCode     uint   `json:"post_code"`
+	Country      string `json:"country"`
+}{
+	AddressLine1: user.Address.AddressLine1,
+	AddressLine2: user.Address.AddressLine2,
+	City:         user.Address.City,
+	PostCode:     user.Address.PostCode,
+	Country:      user.Address.Country,
+}
+
+	return &response, nil
 }
 
 func (s UserService) UpdateProfile(id uint, input dto_.ProfileInput) error {
@@ -230,7 +253,7 @@ func (s UserService) UpdateProfile(id uint, input dto_.ProfileInput) error {
 		City:         input.AddressInput.City,
 		Country:      input.AddressInput.Country,
 		PostCode:     input.AddressInput.PostCode,
-		UserId:       id,
+		UserID:       id,
 	}
 
 	err = s.Repo.UpdateProfile(address)
@@ -269,7 +292,7 @@ func (s UserService) BecomeSeller(id uint, input dto_.SellerInput) (string, erro
 		BankAccount: input.BankAccountNumber,
 		SwiftCode:   input.SwiftCode,
 		PaymentType: input.PaymentType,
-		UserId:      id,
+		UserID:      id,
 	})
 
 	return token, err
@@ -326,13 +349,13 @@ func (s UserService) CreateCart(input dto_.CreateCartRequest, u models.User) ([]
 		// create cart
 
 		err := s.Repo.CreateCart(models.Cart{
-			UserId:    u.ID,
-			ProductId: input.ProductId,
+			UserID:    u.ID,
+			ProductID: input.ProductId,
 			Name:      product.Name,
-			ImageUrl:  product.ImageUrl,
+			ImageURL:  product.ImageURL,
 			Qty:       input.Qty,
 			Price:     product.Price,
-			SellerId:  uint(product.UserId),
+			SellerID:  uint(product.ShopID),
 		})
 
 		if err != nil {
@@ -361,18 +384,18 @@ func (s UserService) CreateOrder(uId uint, orderRef string, pId string, amount f
 
 	for _, item := range cartItems {
 		orderItems = append(orderItems, models.OrderItem{
-			ProductId: item.ProductId,
+			ProductID: item.ProductID,
 			Qty:       item.Qty,
 			Price:     item.Price,
 			Name:      item.Name,
-			ImageUrl:  item.ImageUrl,
-			SellerId:  item.SellerId,
+			ImageURL:  item.ImageURL,
+			SellerID:  item.SellerID,
 		})
 	}
 
 	order := models.Order{
-		UserId:         uId,
-		PaymentId:      pId,
+		UserID:         uId,
+		PaymentID:      pId,
 		OrderRefNumber: orderRef,
 		Amount:         amount,
 		Items:          orderItems,
@@ -408,6 +431,13 @@ func (s UserService) GetOrderById(id uint, uId uint) (models.Order, error) {
 	return order, nil
 }
 
+func (s UserService) GetShopBySlug(slug string) (models.Shop, error) {
+	shop, err := s.Repo.FindBySlug(slug) 
+	if err != nil {
+		return shop, err
+	}
+	return shop, nil
+}
 
 func NewUserService(
 	repo repository.UserRepository,

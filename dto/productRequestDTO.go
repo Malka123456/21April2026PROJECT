@@ -3,8 +3,8 @@ package dto_
 type CreateProductRequest struct {
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
-	CategoryId  uint    `json:"category_id"`
-	ImageUrl    string  `json:"image_url"`
+	CategoryID  uint    `json:"category_id"`
+	ImageURL    string  `json:"image_url"`
 	Price       float64 `json:"price"`
 	Stock       int     `json:"stock"`
 }

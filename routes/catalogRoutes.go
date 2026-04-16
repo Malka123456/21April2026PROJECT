@@ -7,7 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetupCatalogRoutes(app *fiber.App, cont *container.Container) {
+func SetupCatalogRoutes(app *fiber.App, cont *container.Dependency) {
 
 // public
 // listing products and categories
@@ -16,9 +16,13 @@ func SetupCatalogRoutes(app *fiber.App, cont *container.Container) {
 	app.Get("/catagories", cont.CatalogHandler.GetCategories)
 	app.Get("/catagories/:id", cont.CatalogHandler.GetCategoryById)
 
+	// product url  app.Get("/:shopSlug/:productSlug", productHandler.GetProductBySlug)
+  app.Get("/:shopSlug/:productSlug", cont.CatalogHandler.GetProductBySlug) 
+
+
 // private
 	// manage products and categories
-	selRoutes := app.Group("/seller", middleware.AuthorizeSeller) // later i will customised it
+	selRoutes := app.Group("/seller", middleware.AuthMiddleware(cont.Config.JWTSecret)) // later i will customised it
 
 	
 	// Categories
@@ -35,4 +39,5 @@ func SetupCatalogRoutes(app *fiber.App, cont *container.Container) {
 	selRoutes.Delete("/products/:id", cont.CatalogHandler.DeleteProduct)
 
 
+	
 }

@@ -313,7 +313,17 @@ func (h *UserHandler) BecomeSeller(ctx *fiber.Ctx) error {
 	})
 }
 
+func (h *UserHandler) GetShopBySlug(ctx *fiber.Ctx) error {
+	slug := ctx.Params("shopSlug")
 
+	shop, err := h.Service.GetShopBySlug(slug)
+	if err != nil {
+		return ctx.Status(http.StatusNotFound).JSON(&fiber.Map{
+			"error": err.Error()})
+	}
+
+	return ctx.JSON(shop)
+}
 
 
 

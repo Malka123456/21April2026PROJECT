@@ -21,6 +21,9 @@ type CatalogRepository interface {
 	FindSellerProducts(id int) ([]*models.Product, error)
 	EditProduct(e *models.Product) (*models.Product, error)
 	DeleteProduct(e *models.Product) error
+
+	FindBySlugAndShop(slug string, shopID uint) (*models.Product, error)
+	FindShopBySlug(slug string) (*models.Shop, error)
 }
 
 type catalogRepository struct {
@@ -138,6 +141,29 @@ func (c catalogRepository) DeleteCategory(id int) error {
 	return nil
 
 }
+
+func (r catalogRepository) FindBySlugAndShop(slug string, shopID uint) (*models.Product, error) {
+	var product models.Product
+
+	err := r.db.Where("slug = ? AND shop_id = ?", slug, shopID).First(&product).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &product, nil
+}
+
+func (r catalogRepository) FindShopBySlug(slug string) (*models.Shop, error) {
+	var shop models.Shop
+
+	err := r.db.Where("slug = ?", slug).First(&shop).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &shop, nil
+}
+
 
 func NewCatalogRepository(db *gorm.DB) CatalogRepository {
 	return &catalogRepository{

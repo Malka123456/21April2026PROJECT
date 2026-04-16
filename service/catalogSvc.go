@@ -37,7 +37,7 @@ func (s CatalogService) CreateCategory(input dto_.CreateCategoryRequest) error {
 
 	err := s.Repo.CreateCategory(&models.Category{
 		Name:         input.Name,
-		ImageUrl:     input.ImageUrl,
+		ImageURL:     input.ImageURL,
 		DisplayOrder: input.DisplayOrder,
 	})
 
@@ -56,12 +56,12 @@ func (s CatalogService) EditCategory(id int, input dto_.CreateCategoryRequest) (
 		exitCat.Name = input.Name
 	}
 
-	if input.ParentId > 0 {
-		exitCat.ParentId = input.ParentId
+	if input.ParentID > 0 {
+		exitCat.ParentID = input.ParentID
 	}
 
-	if len(input.ImageUrl) > 0 {
-		exitCat.ImageUrl = input.ImageUrl
+	if len(input.ImageURL) > 0 {
+		exitCat.ImageURL = input.ImageURL
 	}
 
 	if input.DisplayOrder > 0 {
@@ -104,13 +104,15 @@ func (s CatalogService) GetCategory(id int) (*models.Category, error) {
 }
 
 func (s CatalogService) CreateProduct(input dto_.CreateProductRequest, user models.User) error {
+
+	
 	err := s.Repo.CreateProduct(&models.Product{
 		Name:        input.Name,
 		Description: input.Description,
 		Price:       input.Price,
-		CategoryId:  input.CategoryId,
-		ImageUrl:    input.ImageUrl,
-		UserId:      int(user.ID),
+		CategoryID:  input.CategoryID,
+		ImageURL:    input.ImageURL,
+		ShopID:      uint(user.ID),
 		Stock:       uint(input.Stock),
 	})
 
@@ -125,7 +127,7 @@ func (s CatalogService) EditProduct(id int, input dto_.CreateProductRequest, use
 	}
 
 	// verify product owner
-	if exitProduct.UserId != int(user.ID) {
+	if int(exitProduct.ShopID) != int(user.ID) {
 		return nil, errors.New("you don't have manage rights of this product")
 	}
 
@@ -141,8 +143,8 @@ func (s CatalogService) EditProduct(id int, input dto_.CreateProductRequest, use
 		exitProduct.Price = input.Price
 	}
 
-	if input.CategoryId > 0 {
-		exitProduct.CategoryId = input.CategoryId
+	if input.CategoryID > 0 {
+		exitProduct.CategoryID = input.CategoryID
 	}
 
 	updatedProduct, err := s.Repo.EditProduct(exitProduct)
@@ -157,7 +159,7 @@ func (s CatalogService) DeleteProduct(id int, user models.User) error {
 	}
 
 	// verify product owner
-	if exitProduct.UserId != int(user.ID) {
+	if int(exitProduct.ShopID) != int(user.ID) {
 		return errors.New("you don't have manage rights of this product")
 	}
 
@@ -203,7 +205,7 @@ func (s CatalogService) UpdateProductStock(e models.Product) (*models.Product, e
 	}
 
 	// verify product owner
-	if product.UserId != e.UserId {
+	if product.ShopID != e.ShopID {
 		return nil, errors.New("you don't have manage rights of this product")
 	}
 	product.Stock = e.Stock
@@ -212,6 +214,22 @@ func (s CatalogService) UpdateProductStock(e models.Product) (*models.Product, e
 		return nil, err
 	}
 	return editProduct, nil
+}
+
+func (s CatalogService) GetProductBySlug(shopSlug, productSlug string) (*models.Product, error) {
+
+	// Step 1: find shop
+	shop, err := s.Repo.FindShopBySlug(shopSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	// Step 2: find product inside shop
+	product, err := s.Repo.FindBySlugAndShop(productSlug, shop.ID)
+	if err != nil {
+		return nil, err
+	}
+	return product, nil
 }
 
 func NewCatalogService(auth helper.AuthHelper, repo repository.CatalogRepository) *CatalogService {

@@ -25,8 +25,9 @@ type User struct {
 	Expiry    time.Time `json:"expiry"`
 	Address   Address   `json:"address"` // relation
 	Cart      Cart      `json:"cart"`    // relation
-	Orders    []Order   `json:"orders"`  // relation
-	Payments  []Payment `json:"payment"` // relation
-	Verified  bool      `json:"verified" gorm:"default:false"`
-	UserType  Role      `json:"user_type" gorm:"default:buyer"`
+
+	Orders   []Order   `json:"orders"`   // relation
+	Payments []Payment `json:"payment" ` // relation
+	Verified bool      `json:"verified" gorm:"default:false"`
+	UserType Role      `json:"user_type" gorm:"default:buyer"`
 }

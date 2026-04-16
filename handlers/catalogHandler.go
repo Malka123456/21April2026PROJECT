@@ -119,6 +119,19 @@ func (h CatalogHandler) GetProduct(ctx *fiber.Ctx) error {
 
 	return rest.SuccessResponse(ctx, "product", product)
 }
+// GetProductBySlug gets product by slug  
+  func (h CatalogHandler) GetProductBySlug(ctx *fiber.Ctx) error {
+	shopSlug := ctx.Params("shopSlug")
+	productSlug := ctx.Params("productSlug")
+
+	
+	product, err := h.svc.GetProductBySlug(shopSlug, productSlug)  
+		if err != nil {
+		return rest.BadRequestError(ctx, "product not found")
+	}
+
+	return rest.SuccessResponse(ctx, "product", product)
+}
 
 func (h CatalogHandler) EditProduct(ctx *fiber.Ctx) error {
 
@@ -146,9 +159,9 @@ func (h CatalogHandler) UpdateStock(ctx *fiber.Ctx) error {
 	user := h.svc.Auth.GetCurrentUser(ctx)
 
 	product := models.Product{
-		CategoryId:     uint(id),
+		CategoryID:     uint(id),
 		Stock:  uint(req.Stock),
-		UserId: int(user.ID),
+		ShopID: uint(user.ID),
 	}
 
 	updatedProduct, err := h.svc.UpdateProductStock(product)
@@ -165,6 +178,8 @@ func (h CatalogHandler) DeleteProduct(ctx *fiber.Ctx) error {
 
 	return rest.SuccessResponse(ctx, "Delete product ", err)
 }
+
+
 
 func NewCatalogHandler(svc *service.CatalogService) *CatalogHandler {
 	return &CatalogHandler{

@@ -21,7 +21,14 @@ func InitDB(dsn string) *gorm.DB {
 func Migrate(db *gorm.DB) {
 	db.AutoMigrate(
 		&models.User{},
-		&models.Order{},
+		&models.Address{},
+		&models.BankAccount{},
+		&models.Category{},
+		&models.Product{},
 		&models.Cart{},
+		&models.Order{},
+		&models.OrderItem{},
+		&models.Payment{},
+		&models.Shop{},
 	)
 }

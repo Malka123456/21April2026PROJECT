@@ -32,6 +32,9 @@ type UserRepository interface {
 	// Profile
 	CreateProfile(e models.Address) error
 	UpdateProfile(e models.Address) error
+   
+	// Shop slug
+	FindBySlug(slug string) (models.Shop, error)
 }
 
 type userRepository struct {
@@ -78,7 +81,7 @@ func (r userRepository) CreateProfile(e models.Address) error {
 
 func (r userRepository) UpdateProfile(e models.Address) error {
 
-	err := r.db.Where("user_id=?", e.UserId).Updates(e).Error
+	err := r.db.Where("user_id=?", e.UserID).Updates(e).Error
 	if err != nil {
 		log.Printf("error on update profile with address %v", err)
 		return errors.New("failed to create profile")
@@ -179,6 +182,11 @@ func (r userRepository) UpdateUser(id uint, u models.User) (models.User, error) 
 	return user, nil
 }
 
+func (r userRepository) FindBySlug(slug string) (models.Shop, error) {
+	var shop models.Shop
+	err := r.db.Where("slug = ?", slug).First(&shop).Error
+	return shop, err
+}
 
 // NewUserRepository creates a new UserRepository
 func NewUserRepository(db *gorm.DB) UserRepository {

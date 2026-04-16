@@ -9,5 +9,5 @@ type Address struct {
 	City         string    `json:"city"`
 	PostCode     uint      `json:"postCode"`
 	Country      string    `json:"country"`
-	UserId       uint      `json:"user_id"`
+	UserID       uint      `json:"user_id"`
 }

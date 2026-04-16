@@ -11,7 +11,7 @@ import (
 
 
 
-func  SetupUserRoutes(app *fiber.App, c *container.Container) {
+func  SetupUserRoutes(app *fiber.App, c *container.Dependency) {
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Backend is running")
@@ -20,12 +20,15 @@ func  SetupUserRoutes(app *fiber.App, c *container.Container) {
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("Server is healthy")
 	})
-	
-	pubRoutes := app.Group("/api")
-	
-	pubRoutes.Post("/signup", c.UserHandler.SignUp) 
-	pubRoutes.Post("/signin", c.UserHandler.SignIn)
 
+	// public routes
+  app.Post("/signup", c.UserHandler.SignUp) 
+	app.Post("/signin", c.UserHandler.SignIn)
+	app.Get("/:shopSlug", c.UserHandler.GetShopBySlug)
+
+
+
+	// private routes
   priRoutes := app.Group("/user", middleware.AuthMiddleware(c.Config.JWTSecret)) // Apply auth middleware to all routes in this group
 
 	priRoutes.Get("/verify", c.UserHandler.GetVerificationCode)	
@@ -42,6 +45,8 @@ func  SetupUserRoutes(app *fiber.App, c *container.Container) {
 	priRoutes.Get("/order/:id", c.UserHandler.GetOrder)	
 
 	priRoutes.Post("/Become-seller", c.UserHandler.BecomeSeller)	
+
+
 
 
 

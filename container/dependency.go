@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type Container struct {
+type Dependency struct {
 	// 🔹 Core dependencies
 	DB     *gorm.DB
 	Config config.AppConfig
@@ -30,7 +30,7 @@ type Container struct {
 	CatalogHandler *handlers.CatalogHandler
 }
 
-func BuildContainer() *Container {
+func BuildContainer() *Dependency {
 
 	// 🔹 base
 	config := config.LoadConfig()
@@ -54,7 +54,7 @@ func BuildContainer() *Container {
 		catalogHandler := handlers.NewCatalogHandler(catalogService)
 
 
-	return &Container{
+	return &Dependency{
 		DB: db,
 		Config: config,
 		Auth: auth,
