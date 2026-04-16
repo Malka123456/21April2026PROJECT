@@ -122,13 +122,18 @@ func (h *UserHandler) SignIn(c *fiber.Ctx) error {
 
 func (h *UserHandler) GetVerificationCode(ctx *fiber.Ctx) error {
 
-	user := h.Service.Auth.GetCurrentUser(ctx)
+	user, err := h.Service.Auth.GetCurrentUser(ctx)
+	if err != nil {
+		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{
+			"message": "unauthorized",
+		})
+	}
 	log.Println(user)
 	// create verification code and update to user profile in DB
-	err := h.Service.GetVerificationCode(user)
-	log.Println(err)
+	error := h.Service.GetVerificationCode(user)
+	log.Println(error)
 
-	if err != nil {
+	if error != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{
 			"message": "unable to generate verification code",
 		})
@@ -141,7 +146,12 @@ func (h *UserHandler) GetVerificationCode(ctx *fiber.Ctx) error {
 }
 func (h *UserHandler) Verify(ctx *fiber.Ctx) error {
 
-	user := h.Service.Auth.GetCurrentUser(ctx)
+	user, err := h.Service.Auth.GetCurrentUser(ctx)
+	if err != nil {
+		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{
+			"message": "unauthorized",
+		})
+	}
 
 	// request
 	var req dto_.VerificationCodeInput
@@ -152,11 +162,11 @@ func (h *UserHandler) Verify(ctx *fiber.Ctx) error {
 		})
 	}
 
-	err := h.Service.VerifyCode(user.ID, req.Code)
+	error := h.Service.VerifyCode(user.ID, req.Code)
 
-	if err != nil {
+	if error != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{
-			"message": err.Error(),
+			"message": error.Error(),
 		})
 	}
 
@@ -166,7 +176,12 @@ func (h *UserHandler) Verify(ctx *fiber.Ctx) error {
 }
 func (h *UserHandler) CreateProfile(ctx *fiber.Ctx) error {
 
-	user := h.Service.Auth.GetCurrentUser(ctx)
+	user, err := h.Service.Auth.GetCurrentUser(ctx)
+	if err != nil {
+		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{
+			"message": "unauthorized",
+		})
+	}
 	req := dto_.ProfileInput{}
 	if err := ctx.BodyParser(&req); err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{
@@ -176,9 +191,9 @@ func (h *UserHandler) CreateProfile(ctx *fiber.Ctx) error {
 	log.Printf("User %v", user)
 	// create profile
 
-	err := h.Service.CreateProfile(user.ID, req)
+	error := h.Service.CreateProfile(user.ID, req)
 
-	if err != nil {
+	if error != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{
 			"message": "unable to create profile",
 		})
@@ -190,7 +205,12 @@ func (h *UserHandler) CreateProfile(ctx *fiber.Ctx) error {
 }
 func (h *UserHandler) GetProfile(ctx *fiber.Ctx) error {
 
-	user := h.Service.Auth.GetCurrentUser(ctx)
+	user, err := h.Service.Auth.GetCurrentUser(ctx)
+	if err != nil {
+		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{
+			"message": "unauthorized",
+		})
+	}
 	log.Println(user)
 
 	// call user service and perform get profile
@@ -208,7 +228,12 @@ func (h *UserHandler) GetProfile(ctx *fiber.Ctx) error {
 }
 
 func (h *UserHandler) UpdateProfile(ctx *fiber.Ctx) error {
-	user := h.Service.Auth.GetCurrentUser(ctx)
+	user, err := h.Service.Auth.GetCurrentUser(ctx)
+	if err != nil {
+		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{
+			"message": "unauthorized",
+		})
+	}
 	req := dto_.ProfileInput{}
 	if err := ctx.BodyParser(&req); err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{
@@ -216,8 +241,8 @@ func (h *UserHandler) UpdateProfile(ctx *fiber.Ctx) error {
 		})
 	}
 
-	err := h.Service.UpdateProfile(user.ID, req)
-	if err != nil {
+	error := h.Service.UpdateProfile(user.ID, req)
+	if error != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{
 			"message": "unable to update profile",
 		})
@@ -237,7 +262,12 @@ func (h *UserHandler) AddtoCart(ctx *fiber.Ctx) error {
 		})
 	}
 
-	user := h.Service.Auth.GetCurrentUser(ctx)
+	user, err := h.Service.Auth.GetCurrentUser(ctx)
+	if err != nil {
+		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{
+			"message": "unauthorized",
+		})
+	}
 
 	// call user service and perform create cart
 	cartItems, err := h.Service.CreateCart(req, user)
@@ -249,7 +279,12 @@ func (h *UserHandler) AddtoCart(ctx *fiber.Ctx) error {
 
 }
 func (h *UserHandler) GetCart(ctx *fiber.Ctx) error {
-	user := h.Service.Auth.GetCurrentUser(ctx)
+	user, err := h.Service.Auth.GetCurrentUser(ctx)
+	if err != nil {
+		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{
+			"message": "unauthorized",
+		})
+	}
 	cart, _, err := h.Service.FindCart(user.ID)
 	if err != nil {
 		return rest.InternalError(ctx, errors.New("cart does not exist"))
@@ -261,7 +296,12 @@ func (h *UserHandler) GetCart(ctx *fiber.Ctx) error {
 }
 
 func (h *UserHandler) GetOrders(ctx *fiber.Ctx) error {
-	user := h.Service.Auth.GetCurrentUser(ctx)
+	user, err := h.Service.Auth.GetCurrentUser(ctx)
+	if err != nil {
+		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{
+			"message": "unauthorized",
+		})
+	}
 
 	orders, err := h.Service.GetOrders(user)
 	if err != nil {
@@ -275,7 +315,12 @@ func (h *UserHandler) GetOrders(ctx *fiber.Ctx) error {
 }
 func (h *UserHandler) GetOrder(ctx *fiber.Ctx) error {
 	orderId, _ := strconv.Atoi(ctx.Params("id"))
-	user := h.Service.Auth.GetCurrentUser(ctx)
+	user, err := h.Service.Auth.GetCurrentUser(ctx)
+	if err != nil {
+		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{
+			"message": "unauthorized",
+		})
+	}
 
 	order, err := h.Service.GetOrderById(uint(orderId), user.ID)
 	if err != nil {
@@ -289,11 +334,16 @@ func (h *UserHandler) GetOrder(ctx *fiber.Ctx) error {
 }
 func (h *UserHandler) BecomeSeller(ctx *fiber.Ctx) error {
 
-	user := h.Service.Auth.GetCurrentUser(ctx)
+	user, err := h.Service.Auth.GetCurrentUser(ctx)
+	if err != nil {
+		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{
+			"message": "unauthorized",
+		})
+	}
 
 	req := dto_.SellerInput{}
-	err := ctx.BodyParser(&req)
-	if err != nil {
+	error := ctx.BodyParser(&req)
+	if error != nil {
 		return ctx.Status(400).JSON(&fiber.Map{
 			"message": "request parameters are not valid",
 		})
@@ -301,9 +351,11 @@ func (h *UserHandler) BecomeSeller(ctx *fiber.Ctx) error {
 
 	token, err := h.Service.BecomeSeller(user.ID, req)
 
+
 	if err != nil {
 		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{
 			"message": "fail to become seller",
+			"error":   err.Error(),
 		})
 	}
 
@@ -312,6 +364,7 @@ func (h *UserHandler) BecomeSeller(ctx *fiber.Ctx) error {
 		"token":   token,
 	})
 }
+
 
 func (h *UserHandler) GetShopBySlug(ctx *fiber.Ctx) error {
 	slug := ctx.Params("shopSlug")
@@ -322,7 +375,7 @@ func (h *UserHandler) GetShopBySlug(ctx *fiber.Ctx) error {
 			"error": err.Error()})
 	}
 
-	return ctx.JSON(shop)
+	return ctx.Status(http.StatusOK).JSON(shop)
 }
 
 

@@ -24,6 +24,7 @@ type CatalogRepository interface {
 
 	FindBySlugAndShop(slug string, shopID uint) (*models.Product, error)
 	FindShopBySlug(slug string) (*models.Shop, error)
+	GetShopByUserID(userID uint) (*models.Shop, error)
 }
 
 type catalogRepository struct {
@@ -41,7 +42,7 @@ func (c catalogRepository) CreateProduct(e *models.Product) error {
 
 func (c catalogRepository) FindProducts() ([]*models.Product, error) {
 	var products []*models.Product
-	err := c.db.Find(&products).Error
+	err := c.db.Preload("Shop").Find(&products).Error
 	if err != nil {
 		return nil, err
 	}
@@ -163,6 +164,18 @@ func (r catalogRepository) FindShopBySlug(slug string) (*models.Shop, error) {
 
 	return &shop, nil
 }
+
+func (r catalogRepository) GetShopByUserID(userID uint) (*models.Shop, error) {
+	var shop models.Shop
+
+	err := r.db.Where("user_id = ?", userID).First(&shop).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &shop, nil
+}
+
 
 
 func NewCatalogRepository(db *gorm.DB) CatalogRepository {

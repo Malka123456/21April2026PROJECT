@@ -24,7 +24,7 @@ func  SetupUserRoutes(app *fiber.App, c *container.Dependency) {
 	// public routes
   app.Post("/signup", c.UserHandler.SignUp) 
 	app.Post("/signin", c.UserHandler.SignIn)
-	app.Get("/:shopSlug", c.UserHandler.GetShopBySlug)
+	app.Get("/shops/:shopSlug", c.UserHandler.GetShopBySlug)
 
 
 

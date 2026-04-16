@@ -67,9 +67,14 @@ func (h AuthHelper) GenerateToken(userID uint) (string, error) {
 		return tokenString, nil
 }
 
-func (h AuthHelper) GetCurrentUser(ctx *fiber.Ctx) models.User {
-	 user := ctx.Locals("user") 
-	 return user.(models.User)
+func (h AuthHelper) GetCurrentUser(ctx *fiber.Ctx) (models.User, error) {
+
+	user, ok := ctx.Locals("user").(models.User)
+	if !ok {
+		return models.User{}, errors.New("unauthorized: user not found in context")
+	}
+
+	return user, nil
 }
 
 func (h AuthHelper) GenerateCode() (string, error) {

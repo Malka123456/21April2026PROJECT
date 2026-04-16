@@ -265,10 +265,13 @@ func (s UserService) UpdateProfile(id uint, input dto_.ProfileInput) error {
 
 func (s UserService) BecomeSeller(id uint, input dto_.SellerInput) (string, error) {
 	// find existing user
-	user, _ := s.Repo.FindUserById(id)
+	user, err := s.Repo.FindUserById(id)
+	if err != nil {
+		return "", errors.New("user not found")
+	}
 
 	if user.UserType == models.RoleSeller {
-		return "", errors.New("you have already joined seller program")
+		return "", errors.New(" already a seller")
 	}
 
 	// update user
@@ -279,6 +282,20 @@ func (s UserService) BecomeSeller(id uint, input dto_.SellerInput) (string, erro
 		UserType:  models.RoleSeller,
 	})
 
+	if err != nil {
+		return "", err
+	}
+
+	// create shop for the seller
+	shop := models.Shop{
+	UserID: seller.ID,
+	Name:   input.ShopName,
+	Slug: helper.GenerateSlug(input.ShopName),
+	GSTNumber: input.GSTNumber,
+	PANNumber: input.PANNumber,
+}
+
+   err = s.Repo.CreateShop(&shop)
 	if err != nil {
 		return "", err
 	}

@@ -35,6 +35,8 @@ type UserRepository interface {
    
 	// Shop slug
 	FindBySlug(slug string) (models.Shop, error)
+	CreateShop(shop *models.Shop) error
+
 }
 
 type userRepository struct {
@@ -187,6 +189,18 @@ func (r userRepository) FindBySlug(slug string) (models.Shop, error) {
 	err := r.db.Where("slug = ?", slug).First(&shop).Error
 	return shop, err
 }
+
+func (r userRepository) CreateShop(shop *models.Shop) error {
+
+	var existing models.Shop
+	err := r.db.Where("user_id = ?", shop.UserID).First(&existing).Error
+	if err == nil {
+		return errors.New("shop already exists for this user")
+	}
+
+	return r.db.Create(shop).Error
+}
+
 
 // NewUserRepository creates a new UserRepository
 func NewUserRepository(db *gorm.DB) UserRepository {

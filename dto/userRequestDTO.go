@@ -23,8 +23,11 @@ type VerificationCodeInput struct {
 type SellerInput struct {
 	FirstName         string `json:"first_name"`
 	LastName          string `json:"last_name"`
+	ShopName          string `json:"shop_name"`
 	PhoneNumber       string `json:"phone_number"`
 	BankAccountNumber uint   `json:"bankAccountNumber"`
+	GSTNumber         string `json:"gstNumber"`
+	PANNumber         string `json:"panNumber"`
 	SwiftCode         string `json:"swiftCode"`
 	PaymentType       string `json:"paymentType"`
 }

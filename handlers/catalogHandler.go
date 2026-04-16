@@ -10,10 +10,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-
 type CatalogHandler struct {
 	svc *service.CatalogService
 }
+
 func (h CatalogHandler) GetCategories(ctx *fiber.Ctx) error {
 
 	cats, err := h.svc.GetCategories()
@@ -24,8 +24,10 @@ func (h CatalogHandler) GetCategories(ctx *fiber.Ctx) error {
 }
 func (h CatalogHandler) GetCategoryById(ctx *fiber.Ctx) error {
 
-	id, _ := strconv.Atoi(ctx.Params("id"))
-
+id, err := strconv.Atoi(ctx.Params("id"))
+if err != nil {
+	return rest.BadRequestError(ctx, "invalid id")
+}
 	cat, err := h.svc.GetCategory(id)
 	if err != nil {
 		return rest.ErrorMessage(ctx, 404, err)
@@ -54,13 +56,15 @@ func (h CatalogHandler) CreateCategories(ctx *fiber.Ctx) error {
 
 func (h CatalogHandler) EditCategory(ctx *fiber.Ctx) error {
 
-	id, _ := strconv.Atoi(ctx.Params("id"))
-
+id, err := strconv.Atoi(ctx.Params("id"))
+if err != nil {
+	return rest.BadRequestError(ctx, "invalid id")
+}
 	req := dto_.CreateCategoryRequest{}
 
-	err := ctx.BodyParser(&req)
+	error := ctx.BodyParser(&req)
 
-	if err != nil {
+	if error != nil {
 		return rest.BadRequestError(ctx, "update category request is not valid")
 	}
 
@@ -74,10 +78,13 @@ func (h CatalogHandler) EditCategory(ctx *fiber.Ctx) error {
 }
 
 func (h CatalogHandler) DeleteCategory(ctx *fiber.Ctx) error {
-	id, _ := strconv.Atoi(ctx.Params("id"))
-	err := h.svc.DeleteCategory(id)
-	if err != nil {
-		return rest.InternalError(ctx, err)
+id, err := strconv.Atoi(ctx.Params("id"))
+if err != nil {
+	return rest.BadRequestError(ctx, "invalid id")
+}
+	error := h.svc.DeleteCategory(id)
+	if error != nil {
+		return rest.InternalError(ctx, error)
 	}
 	return rest.SuccessResponse(ctx, "category deleted successfully", nil)
 }
@@ -90,19 +97,26 @@ func (h CatalogHandler) CreateProducts(ctx *fiber.Ctx) error {
 		return rest.BadRequestError(ctx, "create product request is not valid")
 	}
 
-	user := h.svc.Auth.GetCurrentUser(ctx)
-	err = h.svc.CreateProduct(req, user)
+	user, err := h.svc.Auth.GetCurrentUser(ctx)
+	if err != nil {
+		return ctx.Status(401).JSON(&fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	product, err := h.svc.CreateProduct(req, user)
 	if err != nil {
 		return rest.InternalError(ctx, err)
 	}
-	return rest.SuccessResponse(ctx, "product created successfully", nil)
+
+	return rest.SuccessResponse(ctx, "product created successfully", product)
 }
 
 func (h CatalogHandler) GetProducts(ctx *fiber.Ctx) error {
 
 	products, err := h.svc.GetProducts()
 	if err != nil {
-		return rest.ErrorMessage(ctx, 404, err)
+		return rest.ErrorMessage(ctx, 500, err)
 	}
 
 	return rest.SuccessResponse(ctx, "products", products)
@@ -110,8 +124,10 @@ func (h CatalogHandler) GetProducts(ctx *fiber.Ctx) error {
 
 func (h CatalogHandler) GetProduct(ctx *fiber.Ctx) error {
 
-	id, _ := strconv.Atoi(ctx.Params("id"))
-
+id, err := strconv.Atoi(ctx.Params("id"))
+if err != nil {
+	return rest.BadRequestError(ctx, "invalid id")
+}
 	product, err := h.svc.GetProductById(id)
 	if err != nil {
 		return rest.BadRequestError(ctx, "product not found")
@@ -119,14 +135,14 @@ func (h CatalogHandler) GetProduct(ctx *fiber.Ctx) error {
 
 	return rest.SuccessResponse(ctx, "product", product)
 }
-// GetProductBySlug gets product by slug  
-  func (h CatalogHandler) GetProductBySlug(ctx *fiber.Ctx) error {
+
+// GetProductBySlug gets product by slug
+func (h CatalogHandler) GetProductBySlug(ctx *fiber.Ctx) error {
 	shopSlug := ctx.Params("shopSlug")
 	productSlug := ctx.Params("productSlug")
 
-	
-	product, err := h.svc.GetProductBySlug(shopSlug, productSlug)  
-		if err != nil {
+	product, err := h.svc.GetProductBySlug(shopSlug, productSlug)
+	if err != nil {
 		return rest.BadRequestError(ctx, "product not found")
 	}
 
@@ -135,13 +151,22 @@ func (h CatalogHandler) GetProduct(ctx *fiber.Ctx) error {
 
 func (h CatalogHandler) EditProduct(ctx *fiber.Ctx) error {
 
-	id, _ := strconv.Atoi(ctx.Params("id"))
-	req := dto_.CreateProductRequest{}
-	err := ctx.BodyParser(&req)
-	if err != nil {
+id, err := strconv.Atoi(ctx.Params("id"))
+if err != nil {
+	return rest.BadRequestError(ctx, "invalid id")
+}	
+
+req := dto_.CreateProductRequest{}
+	error := ctx.BodyParser(&req)
+	if error != nil {
 		return rest.BadRequestError(ctx, "edit product request is not valid")
 	}
-	user := h.svc.Auth.GetCurrentUser(ctx)
+	user, err := h.svc.Auth.GetCurrentUser(ctx)
+	if err != nil {
+		return ctx.Status(401).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
 	product, err := h.svc.EditProduct(id, req, user)
 	if err != nil {
 		return rest.InternalError(ctx, err)
@@ -150,18 +175,26 @@ func (h CatalogHandler) EditProduct(ctx *fiber.Ctx) error {
 }
 
 func (h CatalogHandler) UpdateStock(ctx *fiber.Ctx) error {
-	id, _ := strconv.Atoi(ctx.Params("id"))
-	req := dto_.UpdateStockRequest{}
-	err := ctx.BodyParser(&req)
-	if err != nil {
+id, err := strconv.Atoi(ctx.Params("id"))
+if err != nil {
+	return rest.BadRequestError(ctx, "invalid id")
+}
+
+req := dto_.UpdateStockRequest{}
+	error := ctx.BodyParser(&req)
+	if error != nil {
 		return rest.BadRequestError(ctx, "update stock request is not valid")
 	}
-	user := h.svc.Auth.GetCurrentUser(ctx)
-
+	user, err := h.svc.Auth.GetCurrentUser(ctx)
+	if err != nil {
+		return ctx.Status(401).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
 	product := models.Product{
-		CategoryID:     uint(id),
-		Stock:  uint(req.Stock),
-		ShopID: uint(user.ID),
+		CategoryID: uint(id),
+		Stock:      uint(req.Stock),
+		ShopID:     uint(user.ID),
 	}
 
 	updatedProduct, err := h.svc.UpdateProductStock(product)
@@ -171,18 +204,23 @@ func (h CatalogHandler) UpdateStock(ctx *fiber.Ctx) error {
 
 func (h CatalogHandler) DeleteProduct(ctx *fiber.Ctx) error {
 
-	id, _ := strconv.Atoi(ctx.Params("id"))
-	// need to provide user id to verify ownership
-	user := h.svc.Auth.GetCurrentUser(ctx)
-	err := h.svc.DeleteProduct(id, user)
+id, err := strconv.Atoi(ctx.Params("id"))
+if err != nil {
+	return rest.BadRequestError(ctx, "invalid id")
+}	// need to provide user id to verify ownership
+	user, err := h.svc.Auth.GetCurrentUser(ctx)
+	if err != nil {
+		return ctx.Status(401).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+	error := h.svc.DeleteProduct(id, user)
 
-	return rest.SuccessResponse(ctx, "Delete product ", err)
+	return rest.SuccessResponse(ctx, "Delete product ", error)
 }
-
-
 
 func NewCatalogHandler(svc *service.CatalogService) *CatalogHandler {
 	return &CatalogHandler{
 		svc: svc,
 	}
-}	
+}

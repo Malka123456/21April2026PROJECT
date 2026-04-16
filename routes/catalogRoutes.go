@@ -13,14 +13,14 @@ func SetupCatalogRoutes(app *fiber.App, cont *container.Dependency) {
 // listing products and categories
 	app.Get("/products", cont.CatalogHandler.GetProducts)
 	app.Get("/products/:id", cont.CatalogHandler.GetProduct)
-	app.Get("/catagories", cont.CatalogHandler.GetCategories)
-	app.Get("/catagories/:id", cont.CatalogHandler.GetCategoryById)
+	app.Get("/categories", cont.CatalogHandler.GetCategories)
+	app.Get("/categories/:id", cont.CatalogHandler.GetCategoryById)
 
-	// product url  app.Get("/:shopSlug/:productSlug", productHandler.GetProductBySlug)
-  app.Get("/:shopSlug/:productSlug", cont.CatalogHandler.GetProductBySlug) 
+	// product url   
+  app.Get("/shops/:shopSlug/:productSlug", cont.CatalogHandler.GetProductBySlug) 
 
 
-// private
+  // private
 	// manage products and categories
 	selRoutes := app.Group("/seller", middleware.AuthMiddleware(cont.Config.JWTSecret)) // later i will customised it
 

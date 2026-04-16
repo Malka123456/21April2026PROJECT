@@ -29,7 +29,7 @@ func main() {
 
 	cont := container.BuildContainer()
 
-	routes.SetupUserRoutes(app, cont)
+	setupRoutes(app, cont)
 
 	//config.LoadKeys()
 
@@ -38,4 +38,11 @@ func main() {
 
   log.Fatal(app.Listen(":" + cont.Config.AppPort))
 
+}
+
+func setupRoutes(app *fiber.App, cont *container.Dependency) {
+
+	routes.SetupUserRoutes(app, cont)
+	routes.SetupCatalogRoutes(app, cont)
+	
 }

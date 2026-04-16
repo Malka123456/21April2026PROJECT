@@ -103,21 +103,34 @@ func (s CatalogService) GetCategory(id int) (*models.Category, error) {
 	return cat, nil
 }
 
-func (s CatalogService) CreateProduct(input dto_.CreateProductRequest, user models.User) error {
+func (s CatalogService) CreateProduct(input dto_.CreateProductRequest, user models.User) (*models.Product, error) {
+
+	shop, err := s.Repo.GetShopByUserID(user.ID)
+  if err != nil {
+    return nil, errors.New("Shop not found ")
+  }
 
 	
-	err := s.Repo.CreateProduct(&models.Product{
+	product := &models.Product{
 		Name:        input.Name,
 		Description: input.Description,
 		Price:       input.Price,
 		CategoryID:  input.CategoryID,
 		ImageURL:    input.ImageURL,
-		ShopID:      uint(user.ID),
+		Slug:        helper.GenerateSlug(input.Name),
+		ShopID:      uint(shop.ID),
 		Stock:       uint(input.Stock),
-	})
+	}
 
-	return err
+	err = s.Repo.CreateProduct(product)
+	if err != nil {
+		return nil, errors.New("failed to create product")
+	}
+
+	return product, nil
 }
+
+
 
 func (s CatalogService) EditProduct(id int, input dto_.CreateProductRequest, user models.User) (*models.Product, error) {
 
@@ -171,13 +184,33 @@ func (s CatalogService) DeleteProduct(id int, user models.User) error {
 	return nil
 }
 
-func (s CatalogService) GetProducts() ([]*models.Product, error) {
+// mapper functions
+func ToProductResponse(p models.Product) dto_.ProductResponse {
+
+	return dto_.ProductResponse{
+		ID:    p.ID,
+		Name:  p.Name,
+		Price: float64(p.Price),
+
+		Shop: dto_.ShopResponse{
+			ID:   p.Shop.ID,
+			Name: p.Shop.Name,
+			Slug: p.Shop.Slug,
+		},
+	}
+}
+
+func (s CatalogService) GetProducts() ([]dto_.ProductResponse, error) {
 	products, err := s.Repo.FindProducts()
 	if err != nil {
-		return nil, errors.New("products does not exist")
+		return nil, err
+	}
+	var responses []dto_.ProductResponse
+	for _, p := range products {
+		responses = append(responses, ToProductResponse(*p))
 	}
 
-	return products, err
+	return responses, nil
 }
 
 func (s CatalogService) GetProductById(id int) (*models.Product, error) {
