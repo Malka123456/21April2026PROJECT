@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	dto_ "learning-backend/dto"
 	"learning-backend/mapper"
 	"learning-backend/models"
@@ -148,7 +149,12 @@ if err != nil {
 }
 	product, err := h.svc.GetProductById(id)
 	if err != nil {
-		return rest.BadRequestError(ctx, "product not found")
+		
+		if errors.Is(err, service.ErrProductNotFound) {
+			return rest.NotFoundError(ctx, "product not found")
+		}
+		
+		return rest.InternalError(ctx, err)
 	}
 
 	return rest.SuccessResponse(ctx, "product", mapper.ToProductPublicResponse(product))

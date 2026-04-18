@@ -8,6 +8,7 @@ import (
 	"learning-backend/repository"
 )
 
+var ErrProductNotFound = errors.New("product not found")
 
 type  CatalogService struct {
 	Auth helper.AuthHelper
@@ -181,7 +182,7 @@ func (s CatalogService) GetProducts() ([]*models.Product, error) {
 func (s CatalogService) GetProductById(id int) (*models.Product, error) {
 	product, err := s.Repo.FindProductById(id)
 	if err != nil {
-		return nil, errors.New("product does not exist")
+		return nil, ErrProductNotFound
 	}
 
 	return product, nil

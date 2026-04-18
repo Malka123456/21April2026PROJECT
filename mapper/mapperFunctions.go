@@ -35,6 +35,7 @@ func ToProductPublicResponse(p *models.Product) dto_.ProductPublicResponse {
 		ID:    p.ID,
 		Name:  p.Name,
 		Price: p.Price,
+		Image: p.ImageURL,
 	}
 }
 

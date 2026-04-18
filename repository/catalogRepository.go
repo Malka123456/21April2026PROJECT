@@ -54,7 +54,7 @@ func (c catalogRepository) FindProductById(id int) (*models.Product, error) {
 	err := c.db.First(&product, id).Error
 	if err != nil {
 		log.Printf("db_err: %v", err)
-		return nil, errors.New("product does not exist")
+		return nil, err
 	}
 	return &product, nil
 }
