@@ -39,12 +39,14 @@ func  SetupUserRoutes(app *fiber.App, c *container.Dependency) {
 	priRoutes.Patch("/profile", c.UserHandler.UpdateProfile)	
 
 	priRoutes.Post("/cart", c.UserHandler.AddtoCart)	
-	priRoutes.Get("/cart", c.UserHandler.GetCart)	
+	priRoutes.Get("/cart", c.UserHandler.GetCart)
+	
+	priRoutes.Post("/order", c.UserHandler.PlaceOrder)
 
-	priRoutes.Get("/order", c.UserHandler.GetOrders)	
+	priRoutes.Get("/orders", c.UserHandler.GetOrders)	
 	priRoutes.Get("/order/:id", c.UserHandler.GetOrder)	
 
-	priRoutes.Post("/Become-seller", c.UserHandler.BecomeSeller)	
+	priRoutes.Post("/become-seller", c.UserHandler.BecomeSeller)	
 
 
 

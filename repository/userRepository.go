@@ -18,7 +18,7 @@ type UserRepository interface {
 
 	// Cart
 	FindCartItems(uId uint) ([]models.Cart, error)
-	FindCartItem(uId uint, pId uint) (models.Cart, error)
+	FindCartItem(uId uint, pId uint) (*models.Cart, error)
 	CreateCart(c models.Cart) error
 	UpdateCart(c models.Cart) error
 	DeleteCartById(id uint) error
@@ -98,10 +98,15 @@ func (r userRepository) FindCartItems(uId uint) ([]models.Cart, error) {
 	return carts, err
 }
 
-func (r userRepository) FindCartItem(uId uint, pId uint) (models.Cart, error) {
-	cartItem := models.Cart{}
+func (r userRepository) FindCartItem(uId uint, pId uint) (*models.Cart, error) {
+	    var cartItem models.Cart
 	err := r.db.Where("user_id=? AND product_id=?", uId, pId).First(&cartItem).Error
-	return cartItem, err
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &cartItem, nil
 }
 
 func (r userRepository) CreateCart(c models.Cart) error {
@@ -184,9 +189,11 @@ func (r userRepository) UpdateUser(id uint, u models.User) (models.User, error) 
 	return user, nil
 }
 
+
+
 func (r userRepository) FindBySlug(slug string) (models.Shop, error) {
 	var shop models.Shop
-	err := r.db.Where("slug = ?", slug).First(&shop).Error
+	err := r.db.Preload("Products").Where("slug = ?", slug).First(&shop).Error
 	return shop, err
 }
 

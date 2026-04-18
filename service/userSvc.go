@@ -2,7 +2,7 @@ package service
 
 import (
 	"errors"
-	
+
 	dto_ "learning-backend/dto"
 	"learning-backend/helper"
 	"learning-backend/models"
@@ -10,6 +10,7 @@ import (
 	"log"
 	"time"
 
+	"gorm.io/gorm"
 )
 
 
@@ -33,7 +34,7 @@ func (s *UserService) SignUp(input dto_.SignUp) (string, error) {
 	user, err := s.Repo.CreateUser(models.User{
 		Email:    input.Email,
 		Password: hashedPassword,
-		Phone: input.Phone, 
+		//Phone: input.Phone, 
 	})	
 
 	if err != nil {
@@ -68,13 +69,6 @@ func (s *UserService) SignIn(email string, password string) (string, error) {
 	return s.Auth.GenerateToken(user.ID)
 }
 
-// func (s *UserService) GetProfile(email string, password string) (string, error) {
-// 	return "", nil 
-// }
-
-// func (s *UserService) GetDashboard(email string, password string) (string, error) {
-// 	return "", nil
-// }
 
 func (s UserService) isVerifiedUser(id uint) bool {
 
@@ -198,37 +192,14 @@ func (s UserService) CreateProfile(id uint, input dto_.ProfileInput) error {
 	return nil
 }
 
-func (s UserService) GetProfile(id uint) (*dto_.ProfileResponse, error) {
+func (s UserService) GetProfile(id uint) (*models.User, error) {
 
 	user, err := s.Repo.FindUserById(id)
 	if err != nil {
 		return nil, err
 	}
 
-	response := dto_.ProfileResponse{
-	ID:        user.ID,
-	FirstName: user.FirstName,
-	LastName:  user.LastName,
-	Email:     user.Email,
-	Phone:     user.Phone,
-	UserType:  string(user.UserType),
-}
-
-response.Address = struct {
-	AddressLine1 string `json:"address_line1"`
-	AddressLine2 string `json:"address_line2"`
-	City         string `json:"city"`
-	PostCode     uint   `json:"post_code"`
-	Country      string `json:"country"`
-}{
-	AddressLine1: user.Address.AddressLine1,
-	AddressLine2: user.Address.AddressLine2,
-	City:         user.Address.City,
-	PostCode:     user.Address.PostCode,
-	Country:      user.Address.Country,
-}
-
-	return &response, nil
+	return &user, nil
 }
 
 func (s UserService) UpdateProfile(id uint, input dto_.ProfileInput) error {
@@ -332,59 +303,132 @@ func (s UserService) FindCart(id uint) ([]models.Cart, float64, error) {
 	return cartItems, totalAmount, err
 }
 
+// func (s UserService) CreateCart(input dto_.CreateCartRequest, u models.User) ([]models.Cart, error) {
+// 	// check if the cart is Exist
+// 	cart, err := s.Repo.FindCartItem(u.ID, input.ProductId)
+
+// 	if err != nil {
+// 		return nil, errors.New("error on finding cart item")
+// 	}
+
+// 	if cart.ID > 0 {
+// 		if input.ProductId == 0 {
+// 			return nil, errors.New("please provide a valid product id")
+// 		}
+// 		//  => delete the cart item
+// 		if input.Qty < 1 {
+// 			err := s.Repo.DeleteCartById(cart.ID)
+// 			if err != nil {
+// 				log.Printf("Error on deleting cart item %v", err)
+// 				return nil, errors.New("error on deleting cart item")
+// 			}
+// 		} else {
+// 			//  => update the cart item
+// 			cart.Qty = input.Qty
+// 			err := s.Repo.UpdateCart(cart)
+// 			if err != nil {
+// 				// log error
+// 				return nil, errors.New("error on updating cart item")
+// 			}
+// 		}
+
+// 	} else {
+// 		// check if product exist
+// 		product, _ := s.CRepo.FindProductById(int(input.ProductId))
+// 		if product.ID < 1 {
+// 			return nil, errors.New("product not found to create cart item")
+// 		}
+// 		// create cart
+
+// 		err := s.Repo.CreateCart(models.Cart{
+// 			UserID:    u.ID,
+// 			ProductID: input.ProductId,
+// 			Name:      product.Name,
+// 			ImageURL:  product.ImageURL,
+// 			Qty:       input.Qty,
+// 			Price:     product.Price,
+// 			SellerID:  uint(product.ShopID),
+// 		})
+
+// 		if err != nil {
+// 			return nil, errors.New("error on creating cart item")
+// 		}
+// 	}
+
+// 	return s.Repo.FindCartItems(u.ID)
+
+// }
+
 func (s UserService) CreateCart(input dto_.CreateCartRequest, u models.User) ([]models.Cart, error) {
-	// check if the cart is Exist
-	cart, _ := s.Repo.FindCartItem(u.ID, input.ProductId)
 
-	if cart.ID > 0 {
-		if input.ProductId == 0 {
-			return nil, errors.New("please provide a valid product id")
-		}
-		//  => delete the cart item
-		if input.Qty < 1 {
-			err := s.Repo.DeleteCartById(cart.ID)
-			if err != nil {
-				log.Printf("Error on deleting cart item %v", err)
-				return nil, errors.New("error on deleting cart item")
+	// validate
+	if input.ProductId == 0 {
+		return nil, errors.New("please provide a valid product id")
+	}
+
+	// get product
+	product, err := s.CRepo.FindProductById(int(input.ProductId))
+	if err != nil || product == nil || product.ID == 0 {
+		return nil, errors.New("product not found")
+	}
+
+	// find cart
+	cart, err := s.Repo.FindCartItem(u.ID, input.ProductId)
+
+	// CASE: not found → create
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+
+			if input.Qty < 1 {
+				return nil, errors.New("quantity must be at least 1")
 			}
-		} else {
-			//  => update the cart item
-			cart.Qty = input.Qty
-			err := s.Repo.UpdateCart(cart)
+
+			err = s.Repo.CreateCart(models.Cart{
+				UserID:    u.ID,
+				ProductID: input.ProductId,
+				Name:      product.Name,
+				ImageURL:  product.ImageURL,
+				Qty:       input.Qty,
+				Price:     product.Price,
+				SellerID:  uint(product.ShopID),
+			})
 			if err != nil {
-				// log error
-				return nil, errors.New("error on updating cart item")
+				return nil, errors.New("error on creating cart item")
 			}
+
+			return s.Repo.FindCartItems(u.ID)
 		}
 
-	} else {
-		// check if product exist
-		product, _ := s.CRepo.FindProductById(int(input.ProductId))
-		if product.ID < 1 {
-			return nil, errors.New("product not found to create cart item")
-		}
-		// create cart
+		return nil, errors.New("error on finding cart item")
+	}
 
-		err := s.Repo.CreateCart(models.Cart{
-			UserID:    u.ID,
-			ProductID: input.ProductId,
-			Name:      product.Name,
-			ImageURL:  product.ImageURL,
-			Qty:       input.Qty,
-			Price:     product.Price,
-			SellerID:  uint(product.ShopID),
-		})
 
+
+	// CASE: exists
+
+	if input.Qty < 1 {
+		err = s.Repo.DeleteCartById(cart.ID)
 		if err != nil {
-			return nil, errors.New("error on creating cart item")
+			return nil, errors.New("error on deleting cart item")
 		}
+		return s.Repo.FindCartItems(u.ID)
+	}
+
+	cart.Qty = input.Qty
+if cart.ID == 0 {
+    return nil, errors.New("invalid cart id")
+}
+
+err = s.Repo.UpdateCart(*cart)
+
+if err != nil {
+		return nil, errors.New("error on updating cart item")
 	}
 
 	return s.Repo.FindCartItems(u.ID)
-
 }
 
-func (s UserService) CreateOrder(uId uint, orderRef string, pId string, amount float64) error {
+func (s UserService) CreateOrder(uId uint, orderRef string, pId string) error {
 
 	// find cart items for the user
 	cartItems, _, err := s.FindCart(uId)
@@ -396,10 +440,13 @@ func (s UserService) CreateOrder(uId uint, orderRef string, pId string, amount f
 		return errors.New("cart is empty cannot create the order")
 	}
 
+	var amount float64
 	// create order with generated OrderNumber
 	var orderItems []models.OrderItem
 
 	for _, item := range cartItems {
+		amount += item.Price * float64(item.Qty)
+
 		orderItems = append(orderItems, models.OrderItem{
 			ProductID: item.ProductID,
 			Qty:       item.Qty,
@@ -410,6 +457,7 @@ func (s UserService) CreateOrder(uId uint, orderRef string, pId string, amount f
 		})
 	}
 
+	// create order
 	order := models.Order{
 		UserID:         uId,
 		PaymentID:      pId,
@@ -431,6 +479,7 @@ func (s UserService) CreateOrder(uId uint, orderRef string, pId string, amount f
 	// return order number
 	return err
 }
+
 
 func (s UserService) GetOrders(u models.User) ([]models.Order, error) {
 	orders, err := s.Repo.FindOrders(u.ID)
@@ -456,12 +505,10 @@ func (s UserService) GetShopBySlug(slug string) (models.Shop, error) {
 	return shop, nil
 }
 
-func NewUserService(
-	repo repository.UserRepository,
-	auth helper.AuthHelper,
-) *UserService {
+func NewUserService(auth helper.AuthHelper, repo repository.UserRepository,cRepo repository.CatalogRepository) *UserService {
 	return &UserService{
-		Repo: repo,
 		Auth: auth,
+		Repo: repo,
+		CRepo: cRepo,
 	}
 }

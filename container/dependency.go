@@ -45,7 +45,7 @@ func BuildContainer() *Dependency {
 
 	
 	// 🔹 services
-	userService := service.NewUserService(userRepo, auth)
+	userService := service.NewUserService(auth,userRepo, catalogRepo)
 		catalogService := service.NewCatalogService(auth, catalogRepo)
 
 

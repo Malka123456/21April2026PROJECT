@@ -12,3 +12,8 @@ type CreatePaymentRequest struct {
 	Amount       float64 `json:"amount"`
 	UserId       uint    `json:"user_id"`
 }
+
+type PlaceOrderRequest struct {
+	PaymentID string `json:"payment_id"`
+	OrderRef  string `json:"order_ref"`
+}

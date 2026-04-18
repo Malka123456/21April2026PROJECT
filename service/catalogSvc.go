@@ -16,23 +16,6 @@ type  CatalogService struct {
 
 
 
-// package service
-
-// import (
-// 	"errors"
-// 	"go-ecommerce-app/config"
-// 	"go-ecommerce-app/internal/models"
-// 	"go-ecommerce-app/internal/dto_"
-// 	"go-ecommerce-app/internal/helper"
-// 	"go-ecommerce-app/internal/repository"
-// )
-
-// type CatalogService struct {
-// 	Repo   repository.CatalogRepository
-// 	Auth   helper.Auth
-// 	Config config.AppConfig
-// }
-
 func (s CatalogService) CreateCategory(input dto_.CreateCategoryRequest) error {
 
 	err := s.Repo.CreateCategory(&models.Category{
@@ -184,33 +167,15 @@ func (s CatalogService) DeleteProduct(id int, user models.User) error {
 	return nil
 }
 
-// mapper functions
-func ToProductResponse(p models.Product) dto_.ProductResponse {
 
-	return dto_.ProductResponse{
-		ID:    p.ID,
-		Name:  p.Name,
-		Price: float64(p.Price),
 
-		Shop: dto_.ShopResponse{
-			ID:   p.Shop.ID,
-			Name: p.Shop.Name,
-			Slug: p.Shop.Slug,
-		},
-	}
-}
-
-func (s CatalogService) GetProducts() ([]dto_.ProductResponse, error) {
+func (s CatalogService) GetProducts() ([]*models.Product, error) {
 	products, err := s.Repo.FindProducts()
 	if err != nil {
-		return nil, err
-	}
-	var responses []dto_.ProductResponse
-	for _, p := range products {
-		responses = append(responses, ToProductResponse(*p))
+		return nil, errors.New("products does not exist")
 	}
 
-	return responses, nil
+	return products, err
 }
 
 func (s CatalogService) GetProductById(id int) (*models.Product, error) {

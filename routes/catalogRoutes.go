@@ -11,8 +11,8 @@ func SetupCatalogRoutes(app *fiber.App, cont *container.Dependency) {
 
 // public
 // listing products and categories
-	app.Get("/products", cont.CatalogHandler.GetProducts)
-	app.Get("/products/:id", cont.CatalogHandler.GetProduct)
+	app.Get("/products", cont.CatalogHandler.GetProductsForPublic)
+	app.Get("/products/:id", cont.CatalogHandler.GetProductForPublic)
 	app.Get("/categories", cont.CatalogHandler.GetCategories)
 	app.Get("/categories/:id", cont.CatalogHandler.GetCategoryById)
 
@@ -32,8 +32,8 @@ func SetupCatalogRoutes(app *fiber.App, cont *container.Dependency) {
 
 	// Products
 	selRoutes.Post("/products", cont.CatalogHandler.CreateProducts)
-	selRoutes.Get("/products", cont.CatalogHandler.GetProducts)
-	selRoutes.Get("/products/:id", cont.CatalogHandler.GetProduct)
+	selRoutes.Get("/products", cont.CatalogHandler.GetProductsForSeller)
+	selRoutes.Get("/products/:id", cont.CatalogHandler.GetProductForSeller)
 	selRoutes.Put("/products/:id", cont.CatalogHandler.EditProduct)
 	selRoutes.Patch("/products/:id", cont.CatalogHandler.UpdateStock) // update stock
 	selRoutes.Delete("/products/:id", cont.CatalogHandler.DeleteProduct)

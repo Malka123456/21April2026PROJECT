@@ -5,10 +5,11 @@ import (
 	//"hash"
 	"errors"
 	dto_ "learning-backend/dto"
+	"learning-backend/mapper"
 	"learning-backend/rest"
 	"learning-backend/service"
 	"log"
-	"net/http"  
+	"net/http"
 	"strconv"
 
 	//"learning-backend/middleware"
@@ -77,48 +78,7 @@ func (h *UserHandler) SignIn(c *fiber.Ctx) error {
 
 }
 
-// func (h *UserHandler) GetVerificationCode(c *fiber.Ctx) error {
-// 	return nil
-// }
 
-// func (h *UserHandler) Verify(c *fiber.Ctx) error {
-// 	return nil
-// }
-
-// func (h *UserHandler) CreateProfile(c *fiber.Ctx) error {
-// 	return nil
-// }
-
-
-// func (h *UserHandler) GetProfile(c *fiber.Ctx) error {
-
-// 	return nil
-// }
-
-// func (h *UserHandler) UpdateProfile(c *fiber.Ctx) error {
-
-// 	return nil
-// }
-
-// func (h *UserHandler) Addto_Cart(c *fiber.Ctx) error {
-// 	return nil
-// }
-
-// func (h *UserHandler) GetCart(c *fiber.Ctx) error {
-// 	return nil
-// }
-
-// func (h *UserHandler) GetOrders(c *fiber.Ctx) error {
-// 	return nil
-// }
-
-// func (h *UserHandler) GetOrder(c *fiber.Ctx) error {
-// 	return nil
-// }
-
-// func (h *UserHandler) BecomeSeller(c *fiber.Ctx) error {
-// 	return nil
-// }
 
 func (h *UserHandler) GetVerificationCode(ctx *fiber.Ctx) error {
 
@@ -223,7 +183,7 @@ func (h *UserHandler) GetProfile(ctx *fiber.Ctx) error {
 
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
 		"message": "get profile",
-		"profile": profile,
+		"profile": mapper.ToProfileResponse(profile),
 	})
 }
 
@@ -275,7 +235,7 @@ func (h *UserHandler) AddtoCart(ctx *fiber.Ctx) error {
 		return rest.InternalError(ctx, err)
 	}
 
-	return rest.SuccessResponse(ctx, "cart created successfully", cartItems)
+	return rest.SuccessResponse(ctx, "cart created successfully", mapper.ToCartResponseList(cartItems))
 
 }
 func (h *UserHandler) GetCart(ctx *fiber.Ctx) error {
@@ -291,7 +251,40 @@ func (h *UserHandler) GetCart(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
 		"message": "get cart",
-		"cart":    cart,
+		"cart":    mapper.ToCartResponseList(cart),
+	})
+}
+
+func (h *UserHandler) PlaceOrder(ctx *fiber.Ctx) error {
+
+	user, err := h.Service.Auth.GetCurrentUser(ctx)
+	if err != nil {
+		return ctx.Status(401).JSON(fiber.Map{
+			"message": "unauthorized",
+		})
+	}
+
+	req := dto_.PlaceOrderRequest{}
+	if err := ctx.BodyParser(&req); err != nil {
+		return ctx.Status(400).JSON(fiber.Map{
+			"message": "invalid request",
+		})
+	}
+
+	err = h.Service.CreateOrder(
+		user.ID,
+		req.OrderRef,
+		req.PaymentID,
+	) // ❌ removed amount
+
+	if err != nil {
+		return ctx.Status(500).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.JSON(fiber.Map{
+		"message": "order placed successfully",
 	})
 }
 
@@ -310,7 +303,7 @@ func (h *UserHandler) GetOrders(ctx *fiber.Ctx) error {
 
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
 		"message": "get orders",
-		"orders":  orders,
+		"orders":  mapper.ToOrderResponseList(orders),
 	})
 }
 func (h *UserHandler) GetOrder(ctx *fiber.Ctx) error {
@@ -329,7 +322,7 @@ func (h *UserHandler) GetOrder(ctx *fiber.Ctx) error {
 
 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{
 		"message": "get order by id",
-		"order":   order,
+		"order":   mapper.ToOrderResponse(&order),
 	})
 }
 func (h *UserHandler) BecomeSeller(ctx *fiber.Ctx) error {
@@ -375,7 +368,7 @@ func (h *UserHandler) GetShopBySlug(ctx *fiber.Ctx) error {
 			"error": err.Error()})
 	}
 
-	return ctx.Status(http.StatusOK).JSON(shop)
+	return rest.SuccessResponse(ctx, "shop", mapper.ToShopPublicResponse(shop))
 }
 
 

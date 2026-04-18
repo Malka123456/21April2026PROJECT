@@ -26,3 +26,9 @@ func SuccessResponse(ctx *fiber.Ctx, msg string, data interface{}) error {
 		"data":    data,
 	})
 }
+
+func UnauthorizedError(ctx *fiber.Ctx, msg string) error {
+	return ctx.Status(http.StatusUnauthorized).JSON(fiber.Map{
+		"message": msg,
+	})
+}	

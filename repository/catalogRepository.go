@@ -50,13 +50,13 @@ func (c catalogRepository) FindProducts() ([]*models.Product, error) {
 }
 
 func (c catalogRepository) FindProductById(id int) (*models.Product, error) {
-	var product *models.Product
+	var product models.Product
 	err := c.db.First(&product, id).Error
 	if err != nil {
 		log.Printf("db_err: %v", err)
 		return nil, errors.New("product does not exist")
 	}
-	return product, nil
+	return &product, nil
 }
 
 func (c catalogRepository) FindSellerProducts(id int) ([]*models.Product, error) {

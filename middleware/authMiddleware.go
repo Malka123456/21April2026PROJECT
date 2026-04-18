@@ -51,7 +51,15 @@ func AuthMiddleware(secret string) fiber.Handler {
 			})
 		}
 
-		userID := uint(claims["user_id"].(float64))
+idFloat, ok := claims["user_id"].(float64)
+if !ok {
+	return c.Status(401).JSON(fiber.Map{
+		"error": "invalid user id in token",
+	})
+}
+
+userID := uint(idFloat)
+
 
 		// 🔥 CREATE USER OBJECT
 		user := models.User{
